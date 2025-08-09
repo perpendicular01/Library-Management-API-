@@ -1,12 +1,23 @@
 import express, { Request, Response } from "express";
 import { Book } from "../models/bookModel";
-
-
+import { bookZod } from "../validations/bookValidation";
 
 export const booksRouter = express.Router();
 
 // Create a new book
 booksRouter.post("/", async (req: Request, res: Response) => {
+    const zodbody = await bookZod.safeParseAsync(req.body);
+    // console.log(zodbody);
+    // console.log("rohan")
+    if(!zodbody.success) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid request data",
+            error: zodbody.error
+        });
+    }
+
+
     try {
         const body = req.body;
         const book = await Book.create(body);

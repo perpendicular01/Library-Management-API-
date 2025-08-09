@@ -1,10 +1,12 @@
 import { Schema, model } from 'mongoose';
 import { IBorrow } from '../interfaces/borrow.interface';
+import { Book } from './bookModel';
+
 
 
 // Schema
 const borrowSchema = new Schema<IBorrow>({
-    title: {
+    book: {
         type: Schema.Types.ObjectId,
         ref: 'Book',
         required: true
@@ -21,6 +23,19 @@ const borrowSchema = new Schema<IBorrow>({
 }, {
     timestamps: true, 
     versionKey: false   
+});
+
+borrowSchema.post('save', async function(doc, next) {
+    try {
+        const book = await Book.findById(doc.book);
+        if (book) {
+            book.copies -= doc.quantity;
+            await book.makeAvailable();
+        }
+        next();
+    } catch (err) {
+        next();
+    }
 });
 
 export const Borrow = model('Borrow', borrowSchema);
